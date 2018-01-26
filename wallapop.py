@@ -1,27 +1,30 @@
-import random
-
 from elasticsearch import Elasticsearch
-import time, json, simplejson, urllib, requests
-from constants import *
+import time, json, simplejson, urllib, random
 
 
 
-# *Nico* The id min-max for spain is: 39960000 - 40001797
-RangeMin = 39962140 #39960000
+# The id min-max for spain is: 39960000 - 40001797
+RangeMin = 39960000
 RangeMax = 40001797
 
+#URL wallapop
 url = 'http://pro2.wallapop.com/shnm-portlet/api/v1/user.json/'
 
+#Proxies
 proxies = {
     'http': 'socks5://127.0.0.1:9150',
     'https': 'socks5://127.0.0.1:9150'
 }
 
+#Elasticsearch
+elastic_host = "localhost"
+elastic_port = 9200
+
 
 
 if __name__ == "__main__":
 
-    # Inicializacion elastic_host
+    # Start elastic_host
     es = Elasticsearch()
     profile = {
         "mappings": {
@@ -43,7 +46,7 @@ if __name__ == "__main__":
     elastic = Elasticsearch([{'host': elastic_host, 'port': elastic_port}])
 
 
-    # Initialized Scraper
+    # Start Scraper
     for uid in range(RangeMin, RangeMax):
         try:
             request = (urllib.request.urlopen(url + str(uid) + "?").read()).decode('utf-8')
