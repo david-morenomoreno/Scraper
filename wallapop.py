@@ -1,73 +1,87 @@
 from elasticsearch import Elasticsearch
 import time, json, simplejson, urllib, random
 
+import requests
+import concurrent.futures
 
 
-# The id min-max for spain is: 39960000 - 40001797
-RangeMin = 39960000
-RangeMax = 40001797
 
-#URL wallapop
-url = 'http://pro2.wallapop.com/shnm-portlet/api/v1/user.json/'
 
-#Proxies
-proxies = {
-    'http': 'socks5://127.0.0.1:9150',
-    'https': 'socks5://127.0.0.1:9150'
-}
+class Wallapop(object):
 
-#Elasticsearch
-elastic_host = "localhost"
-elastic_port = 9200
+    def __init__(self):
+
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+
+
+        self.elastic_host = "localhost"
+        self.elastic_port = 9200
+
+        self.session = requests.Session()
+
+
+
+        self.BASE_URL = 'http://pro2.wallapop.com/shnm-portlet/api/v1/'
+
+        es = Elasticsearch()
+        profile = {
+            "mappings": {
+                "wallapop": {
+                    "properties": {
+                        "date": {
+                            "type": "date",
+                            "format": "epoch_second"
+                        },
+                        "geopoint": {
+                            "type": "geo_point",
+                        },
+                    }
+                },
+            }
+        }
+
+        es.indices.create(index="wallapop", ignore=400, body=profile)
+        self.elastic = Elasticsearch([{'host': self.elastic_host, 'port': self.elastic_port}])
+
+
+    def InsertElasticsearch(self,uid, jsonitem ):
+        self.elastic.index(index='wallapop', doc_type='doc', body=simplejson.dumps(jsonitem))
+        print("Usuario con id "+str(uid)+ " Insertado con exito")
+
+
+
+    def User(self, uid):
+        resp = self.session.get(self.BASE_URL+'user.json/' + str(uid) + "?")
+
+        if resp.status_code == 200:
+            jsonitem = json.loads(resp.text)
+            jsonitem['date'] = int(time.time())
+
+            try:
+                Lat = jsonitem['location']['approximatedLatitude']
+                Lon = jsonitem['location']['approximatedLongitude']
+                jsonitem['geopoint'] = str(str(Lat) + ',' + str(Lon))
+            except:
+                pass
+
+            self.executor.submit(self.InsertElasticsearch(uid, jsonitem))
+
+
+        else:
+            print("El usuario " +str(uid)+ " no existe")
 
 
 
 if __name__ == "__main__":
 
-    # Start elastic_host
-    es = Elasticsearch()
-    profile = {
-        "mappings": {
-            "wallapop": {
-                "properties": {
-                    "date": {
-                        "type": "date",
-                        "format": "epoch_second"
-                    },
-                    "geopoint": {
-                        "type": "geo_point",
-                    },
-                }
-            },
-        }
-    }
-
-    es.indices.create(index="wallapop", ignore=400, body=profile)
-    elastic = Elasticsearch([{'host': elastic_host, 'port': elastic_port}])
+    RangeMin = 490762
+    RangeMax = 99999999
 
 
-    # Start Scraper
+    wal = Wallapop()
+
     for uid in range(RangeMin, RangeMax):
-        try:
-            request = (urllib.request.urlopen(url + str(uid) + "?").read()).decode('utf-8')
-            jsonitem = json.loads(request)
-
-            try:
-                Lat = jsonitem['location']['approximatedLatitude']
-                Lon = jsonitem['location']['approximatedLongitude']
-                jsonitem['geopoint'] = str(str(Lat)+','+str(Lon))
-            except:
-                pass
-
-            jsonitem['date'] = int(time.time())
-            elastic.index(index='wallapop', doc_type='doc', body=simplejson.dumps(jsonitem))
-            print(request)
-
-        except:
-            print(str(uid) + " does not exist")
-
-        time.sleep(random.randint(0, 1))
-
+        wal.User(uid)
 
 
 
