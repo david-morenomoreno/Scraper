@@ -49,9 +49,39 @@ class Wallapop(object):
         print("Usuario con id "+str(uid)+ " Insertado con exito")
 
 
+    def UserReviewsSent(self, uid):
+        endpoint = 'review.json/user/%s/send' % uid
+
+        resp = self.session.get(self.BASE_URL+endpoint)
+
+        if resp.status_code == 200:
+            jsonitem = json.loads(resp.text)
+            jsonitem['date'] = int(time.time())
+
+            self.executor.submit(self.InsertElasticsearch(uid, jsonitem))
+
+        else:
+            print("El usuario " +str(uid)+ " no existe")
+
+
+    def UserReviewsReceived(self, uid):
+        endpoint = 'review.json/user/%s/received' % uid
+
+        resp = self.session.get(self.BASE_URL+ endpoint)
+
+        if resp.status_code == 200:
+            jsonitem = json.loads(resp.text)
+            jsonitem['date'] = int(time.time())
+
+            self.executor.submit(self.InsertElasticsearch(uid, jsonitem))
+
+        else:
+            print("El usuario " +str(uid)+ " no existe")
+
 
     def User(self, uid):
-        resp = self.session.get(self.BASE_URL+'user.json/' + str(uid) + "?")
+        endpoint = 'user.json/%s' % uid
+        resp = self.session.get(self.BASE_URL+endpoint+ "?")
 
         if resp.status_code == 200:
             jsonitem = json.loads(resp.text)
