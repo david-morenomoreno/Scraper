@@ -80,31 +80,36 @@ class Wallapop(object):
 
 
     def User(self, uid):
-        endpoint = 'user.json/%s' % uid
-        resp = self.session.get(self.BASE_URL+endpoint+ "?")
+        try:
+            endpoint = 'user.json/%s' % uid
+            resp = self.session.get(self.BASE_URL+endpoint+ "?")
 
-        if resp.status_code == 200:
-            jsonitem = json.loads(resp.text)
-            jsonitem['date'] = int(time.time())
+            if resp.status_code == 200:
+                jsonitem = json.loads(resp.text)
+                jsonitem['date'] = int(time.time())
 
-            try:
-                Lat = jsonitem['location']['approximatedLatitude']
-                Lon = jsonitem['location']['approximatedLongitude']
-                jsonitem['geopoint'] = str(str(Lat) + ',' + str(Lon))
-            except:
-                pass
+                try:
+                    Lat = jsonitem['location']['approximatedLatitude']
+                    Lon = jsonitem['location']['approximatedLongitude']
+                    jsonitem['geopoint'] = str(str(Lat) + ',' + str(Lon))
+                except:
+                    pass
 
-            self.executor.submit(self.InsertElasticsearch(uid, jsonitem))
+                self.executor.submit(self.InsertElasticsearch(uid, jsonitem))
 
 
-        else:
-            print("El usuario " +str(uid)+ " no existe")
+            else:
+                print("El usuario " +str(uid)+ " no existe")
+
+        except Exception as e:
+            print(e)
+            pass
 
 
 
 if __name__ == "__main__":
 
-    RangeMin = 490762
+    RangeMin = 703821
     RangeMax = 99999999
 
 
