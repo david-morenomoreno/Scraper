@@ -19,7 +19,9 @@ class Wallapop(object):
 
         self.session = requests.Session()
 
-
+        self.proxyDict = {
+              "http": "http://127.0.0.1:8080",
+            }
 
         self.BASE_URL = 'http://pro2.wallapop.com/shnm-portlet/api/v1/'
 
@@ -52,7 +54,7 @@ class Wallapop(object):
     def UserReviewsSent(self, uid):
         endpoint = 'review.json/user/%s/send' % uid
 
-        resp = self.session.get(self.BASE_URL+endpoint)
+        resp = self.session.get(self.BASE_URL+endpoint, proxies=self.proxyDict)
 
         if resp.status_code == 200:
             jsonitem = json.loads(resp.text)
@@ -67,7 +69,7 @@ class Wallapop(object):
     def UserReviewsReceived(self, uid):
         endpoint = 'review.json/user/%s/received' % uid
 
-        resp = self.session.get(self.BASE_URL+ endpoint)
+        resp = self.session.get(self.BASE_URL+ endpoint, proxies=self.proxyDict)
 
         if resp.status_code == 200:
             jsonitem = json.loads(resp.text)
@@ -82,7 +84,7 @@ class Wallapop(object):
     def User(self, uid):
         try:
             endpoint = 'user.json/%s' % uid
-            resp = self.session.get(self.BASE_URL+endpoint+ "?")
+            resp = self.session.get(self.BASE_URL+endpoint+ "?", proxies=self.proxyDict)
 
             if resp.status_code == 200:
                 jsonitem = json.loads(resp.text)
@@ -109,7 +111,7 @@ class Wallapop(object):
 
 if __name__ == "__main__":
 
-    RangeMin = 703821
+    RangeMin = 8666809
     RangeMax = 99999999
 
 
