@@ -111,7 +111,7 @@ class Wallapop(object):
 
 if __name__ == "__main__":
 
-    RangeMin = 8666809
+    RangeMin = 8667249
     RangeMax = 99999999
 
 
